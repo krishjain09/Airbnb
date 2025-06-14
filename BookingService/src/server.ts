@@ -26,7 +26,8 @@ app.use(appErrorHandler);
 app.use(genericErrorHandler);
 
 
-app.listen(serverConfig.PORT, () => {
-    logger.info(`Server is running on http://localhost:${serverConfig.PORT}`);
+app.listen(serverConfig.PORT,'0.0.0.0', () => {
+    console.log("PORT BEING USED:", serverConfig.PORT);
+    logger.info(`Server is running on http://0.0.0.0:${serverConfig.PORT}`);
     logger.info(`Press Ctrl+C to stop the server.`);
 });
