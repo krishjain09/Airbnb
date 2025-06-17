@@ -3,13 +3,36 @@ import Redlock from 'redlock'
 import { serverConfig } from '.'
 
 //const redisA = new Client({ host: "a.redis.example.com" });
-export const redisClient = new IOREDIS(serverConfig.REDIS_SERVER_URL)
+// export const redisClient = new IOREDIS(serverConfig.REDIS_SERVER_URL)
+
+function connectionToRedis(){
+    try{
+
+        let connection: IOREDIS;
+        return ()=>{
+            if(!connection){
+                connection = new IOREDIS(serverConfig.REDIS_SERVER_URL);
+                return connection;
+            }
+            return connection;
+        }
+    }
+    catch(error){
+        console.log('Error connecting to Redis',error);
+        throw error;
+    }
+}
+
+export const getRedisConstObj = connectionToRedis();
+
+
+
 
 
 export const redlock = new Redlock(
   // You should have one client for each independent redis node
   // or cluster.
-  [redisClient],
+  [getRedisConstObj()],
   {
     driftFactor: 0.01, // multiplied by lock ttl to determine drift time
 
