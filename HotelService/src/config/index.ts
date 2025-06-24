@@ -4,15 +4,9 @@ import dotenv from 'dotenv';
 type ServerConfig = {
     PORT: number
 }
-/*
-DB_USER=root
-DB_PASSWORD = krishjain123
-DB_NAME=airbnb_dev
-DB_HOST=localhost
-*/
 
 type DBConfig = {
-    DB_USER:string,
+    DB_USER: string,
     DB_PASSWORD : string,
     DB_NAME : string , 
     DB_HOST : string
