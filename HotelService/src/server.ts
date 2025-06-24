@@ -5,8 +5,8 @@ import v2Router from './routers/v2/index.router';
 import { appErrorHandler, genericErrorHandler } from './middlewares/error.middleware';
 import logger from './config/logger.config';
 import { attachCorrelationIdMiddleware } from './middlewares/correlation.middleware';
-import sequelize from './db/models/sequelize';
-import Hotel from './db/models/hotel';
+// import sequelize from './db/models/sequelize';
+// import Hotel from './db/models/hotel';
 
 const app = express();
 
