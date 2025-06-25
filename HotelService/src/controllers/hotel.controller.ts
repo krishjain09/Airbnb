@@ -1,5 +1,6 @@
 import { Request,Response,NextFunction } from "express";
-import { createHotelService, getAllHotelsService, getHotelByIdService, getHotelByLocationService } from "../services/hotel.service";
+import { createHotelService, deleteHotelService, getAllHotelsService, getHotelByIdService, getHotelByLocationService } from "../services/hotel.service";
+import { StatusCodes } from "http-status-codes";
 
 
 export async function createHotelHandler(req: Request,res: Response,next: NextFunction){
@@ -7,7 +8,7 @@ export async function createHotelHandler(req: Request,res: Response,next: NextFu
     const hotelResponse = await createHotelService(req.body);
 
     //2. sends the response
-    res.status(201).json({
+    res.status(StatusCodes.CREATED).json({
         message: "Hotel created successfully",
         data: hotelResponse,
         success: true
@@ -18,7 +19,7 @@ export async function getHotelByIdHandler(req: Request,res: Response,next: NextF
     
     const hotelResponse=await getHotelByIdService(Number(req.params.id));
 
-    res.status(200).json({
+    res.status(StatusCodes.OK).json({
         message: "Hotel found successfully",
         data: hotelResponse,
         success: true
@@ -28,7 +29,7 @@ export async function getHotelByIdHandler(req: Request,res: Response,next: NextF
 
 export async function getAllHotelsHandler(req: Request,res: Response,next: NextFunction){
     const hotelResponse = await getAllHotelsService();
-    res.status(200).json({
+    res.status(StatusCodes.OK).json({
         message: "Hotel's found successfully",
         data: hotelResponse,
         success: true
@@ -37,8 +38,17 @@ export async function getAllHotelsHandler(req: Request,res: Response,next: NextF
 
 export async function getHotelByLocationHandler(req: Request,res: Response,next: NextFunction){
     const hotelResponse = await getHotelByLocationService(String(req.params.location));
-    res.status(200).json({
+    res.status(StatusCodes.OK).json({
         message: "Hotel's found successfully",
+        data: hotelResponse,
+        success: true
+    });
+}
+
+export async function deleteHotelHandler(req: Request,res: Response,next: NextFunction){
+    const hotelResponse = await deleteHotelService(Number(req.params.id));
+    res.status(StatusCodes.OK).json({
+        message: "Hotel's deleted successfully",
         data: hotelResponse,
         success: true
     });
