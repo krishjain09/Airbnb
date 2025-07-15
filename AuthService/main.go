@@ -1,9 +1,17 @@
 package main
 
-import "AuthService/app"
+import (
+	"AuthService/app"
+	config "AuthService/config/env"
+)
 
 func main() {
-	cfg := app.NewConfig(":8080")
+
+	config.Load()
+
+	addr := config.GetString("PORT", ":3001")
+
+	cfg := app.NewConfig(addr)
 	app := app.NewApplication(cfg)
 
 	app.Run()
