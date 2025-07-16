@@ -2,7 +2,6 @@ package main
 
 import (
 	"AuthService/app"
-	dbConfig "AuthService/config/db"
 	config "AuthService/config/env"
 )
 
@@ -14,6 +13,6 @@ func main() {
 
 	cfg := app.NewConfig(addr)
 	app := app.NewApplication(cfg)
-	dbConfig.SetUpDB()
+
 	app.Run()
 }

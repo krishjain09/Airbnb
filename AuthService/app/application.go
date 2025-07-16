@@ -1,8 +1,9 @@
 package app
 
 import (
+	dbConfig "AuthService/config/db"
 	"AuthService/controllers"
-	db "AuthService/db/repositories"
+	repo "AuthService/db/repositories"
 	"AuthService/router"
 	"AuthService/services"
 	"fmt"
@@ -16,7 +17,6 @@ type Config struct {
 
 type Application struct {
 	Config Config
-	Store  db.Storage
 }
 
 // Constructor for Config
@@ -35,7 +35,14 @@ func NewApplication(cfg Config) *Application {
 
 func (app *Application) Run() error {
 
-	ur := db.NewUserRepository()
+	db, err := dbConfig.SetUpDB()
+
+	if err != nil {
+		fmt.Println("Error setting up database: ", err)
+		return err
+	}
+
+	ur := repo.NewUserRepository(db)
 	us := services.NewUserService(ur)
 	uc := controllers.NewUserController(us)
 	uRouter := router.NewUserRouter(uc)

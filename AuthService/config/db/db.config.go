@@ -19,7 +19,7 @@ func SetUpDB() (*sql.DB, error) {
 	cfg.DBName = env.GetString("DB_NAME", "auth_dev")
 
 	db, err := sql.Open("mysql", cfg.FormatDSN())
-
+	
 	fmt.Println("Connecting to Database ", cfg.DBName, cfg.FormatDSN())
 
 	if err != nil {
