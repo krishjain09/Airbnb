@@ -35,7 +35,7 @@ func NewApplication(cfg Config) *Application {
 
 func (app *Application) Run() error {
 
-	ur := db.NewUserRepsoitory()
+	ur := db.NewUserRepository()
 	us := services.NewUserService(ur)
 	uc := controllers.NewUserController(us)
 	uRouter := router.NewUserRouter(uc)

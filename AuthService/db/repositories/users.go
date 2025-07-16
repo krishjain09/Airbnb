@@ -12,7 +12,7 @@ type UserRepositoryImpl struct {
 	// db *sql.DB
 }
 
-func NewUserRepsoitory() UserRepository {
+func NewUserRepository() UserRepository {
 	return &UserRepositoryImpl{
 		// db: db
 	}
