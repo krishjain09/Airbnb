@@ -21,3 +21,15 @@ func (uc *UserController) GetUserById(w http.ResponseWriter, r *http.Request) {
 	uc.UserService.GetUserById()
 	w.Write([]byte("User fetching endpoint done"))
 }
+
+func (uc *UserController) CreateUser(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("CreateUser called in UserController")
+	uc.UserService.Create()
+	w.Write([]byte("CreateUser fetching endpoint done"))
+}
+
+func (uc *UserController) LoginUser(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("Login-user called in UserController")
+	uc.UserService.LoginUser()
+	w.Write([]byte("Login-user fetching endpoint done"))
+}
