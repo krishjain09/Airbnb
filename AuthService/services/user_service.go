@@ -3,6 +3,7 @@ package services
 import (
 	env "AuthService/config/env"
 	db "AuthService/db/repositories"
+	"AuthService/dto"
 	"AuthService/utils"
 	"fmt"
 
@@ -12,7 +13,7 @@ import (
 type UserService interface {
 	GetUserById() error
 	Create() error
-	LoginUser() (string, error)
+	LoginUser(payload *dto.LoginUserrequestDTO) (string, error)
 }
 
 type UserServiceImpl struct {
@@ -45,10 +46,10 @@ func (u *UserServiceImpl) Create() error {
 	return nil
 }
 
-func (u *UserServiceImpl) LoginUser() (string, error) {
+func (u *UserServiceImpl) LoginUser(payload *dto.LoginUserrequestDTO) (string, error) {
 
-	email := "email@users"
-	password := "password123"
+	email := payload.Email
+	password := payload.Password
 
 	// Step 1. Make a repository call to get the user by email
 	user, err := u.userRepository.GetUserByEmail(email)
@@ -69,16 +70,16 @@ func (u *UserServiceImpl) LoginUser() (string, error) {
 
 	if !isPasswordValid {
 		fmt.Println("Password does not match")
-		return "", nil
+		return "", fmt.Errorf("password does not match")
 	}
-
+	fmt.Println(user.Username)
 	// Step 4. If password matches, print a JWT token, else return error saying password does not match
-	payload := jwt.MapClaims{
+	jwtPayload := jwt.MapClaims{
 		"email": user.Email,
 		"id":    user.Id,
 	}
 
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, payload)
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwtPayload)
 
 	tokenString, err := token.SignedString([]byte(env.GetString("JWT_SECRET", "TOKEN")))
 

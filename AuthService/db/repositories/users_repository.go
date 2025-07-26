@@ -114,8 +114,8 @@ func (u *UserRepositoryImpl) Create(username string, email string, hashedPasswor
 		fmt.Println("No rows were affected, user not created")
 		return nil
 	}
-	fmt.Println("User created successfully, rows affected:", rowsAffected)
 
+	fmt.Println("User created successfully, rows affected:", rowsAffected)
 	return nil
 }
 
