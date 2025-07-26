@@ -12,7 +12,7 @@ import (
 
 type UserService interface {
 	GetUserById() error
-	Create() error
+	Create(payload *dto.RegisterUserDTO) error
 	LoginUser(payload *dto.LoginUserrequestDTO) (string, error)
 }
 
@@ -32,17 +32,20 @@ func (u *UserServiceImpl) GetUserById() error {
 	return nil
 }
 
-func (u *UserServiceImpl) Create() error {
+func (u *UserServiceImpl) Create(payload *dto.RegisterUserDTO) error {
 	fmt.Println("Creating User in UserService")
-	username := "test@user"
-	email := "email@users"
-	password := "password123"
+	username := payload.Username
+	email := payload.Email
+	password := payload.Password
 	hashedPassword, err := utils.HashPassword(password)
 	if err != nil {
 		fmt.Println("Error in hashing password", err)
 		return err
 	}
-	u.userRepository.Create(username, email, hashedPassword)
+	err = u.userRepository.Create(username, email, hashedPassword)
+	if err!=nil{
+		return fmt.Errorf("email already exists")
+	}
 	return nil
 }
 

@@ -95,6 +95,13 @@ func (u *UserRepositoryImpl) GetAll() (*[]models.User, error) {
 func (u *UserRepositoryImpl) Create(username string, email string, hashedPassword string) error {
 	fmt.Println("Creating user in repository")
 
+	emailAlreadyExists, err := u.GetUserByEmail(email)
+
+	if emailAlreadyExists != nil {
+		fmt.Println("Email already exists. Please login..", emailAlreadyExists.Email, err)
+		return fmt.Errorf("email already exists. Please login")
+	}
+
 	query := "Insert into users(username,email,password) values(?,?,?)"
 
 	result, err := u.db.Exec(query, username, email, hashedPassword)

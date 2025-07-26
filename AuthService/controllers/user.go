@@ -21,13 +21,33 @@ func NewUserController(_userService services.UserService) *UserController {
 
 func (uc *UserController) GetUserById(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("GetUserById called in UserController")
+
 	uc.UserService.GetUserById()
 	w.Write([]byte("User fetching endpoint done"))
 }
 
 func (uc *UserController) CreateUser(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("CreateUser called in UserController")
-	uc.UserService.Create()
+
+	var payload dto.RegisterUserDTO
+
+	if jsonErr := utils.ReadJsonBody(r, &payload); jsonErr != nil {
+		utils.WriteJsonErrorResponse(w, http.StatusBadRequest, "Something went wrong while logging in", jsonErr)
+		return
+	}
+
+	fmt.Println("Registry Payload received", payload)
+
+	if validationErr := utils.Validator.Struct(&payload); validationErr != nil {
+		utils.WriteJsonErrorResponse(w, http.StatusBadRequest, "Invalid input data", validationErr)
+		return
+	}
+	err := uc.UserService.Create(&payload)
+	if err != nil {
+		utils.WriteJsonErrorResponse(w, http.StatusInternalServerError, "Something went wrong while Registering", err)
+		return
+	}
+	utils.WriteJsonSuccessResponse(w, http.StatusCreated, "User Registered successfully", payload)
 	w.Write([]byte("CreateUser fetching endpoint done"))
 }
 
