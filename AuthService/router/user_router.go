@@ -2,7 +2,7 @@ package router
 
 import (
 	"AuthService/controllers"
-	"AuthService/middleware"
+	"AuthService/middlewares"
 
 	"github.com/go-chi/chi/v5"
 )
@@ -18,7 +18,7 @@ func NewUserRouter(_userController *controllers.UserController) Router {
 }
 
 func (ur *UserRouter) Register(r chi.Router) {
-	r.Get("/profile", ur.userController.GetUserById)
-	r.With(middleware.UserCreateRequestValidator).Post("/signup", ur.userController.CreateUser)
-	r.With(middleware.UserLoginRequestValidator).Post("/login", ur.userController.LoginUser)
+	r.With(middlewares.JWTAuthMiddleWare).Get("/profile", ur.userController.GetUserById)
+	r.With(middlewares.UserCreateRequestValidator).Post("/signup", ur.userController.CreateUser)
+	r.With(middlewares.UserLoginRequestValidator).Post("/login", ur.userController.LoginUser)
 }

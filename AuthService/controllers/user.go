@@ -2,7 +2,7 @@ package controllers
 
 import (
 	"AuthService/dto"
-	"AuthService/middleware"
+	"AuthService/middlewares"
 	"AuthService/services"
 	"AuthService/utils"
 	"fmt"
@@ -22,7 +22,32 @@ func NewUserController(_userService services.UserService) *UserController {
 func (uc *UserController) GetUserById(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("GetUserById called in UserController")
 
-	uc.UserService.GetUserById()
+	//extract userId from url parameters
+	userId := r.URL.Query().Get("id")
+
+	if userId == "" {
+		userId = r.Context().Value(middlewares.UserId).(string)
+	}
+	if userId == "" {
+		utils.WriteJsonErrorResponse(w, http.StatusBadRequest, "User ID is required", nil)
+		return
+	}
+	fmt.Println("User ID from Context or URL: ", userId)
+
+	user, err := uc.UserService.GetUserById(userId)
+
+	if err != nil {
+		utils.WriteJsonErrorResponse(w, http.StatusInternalServerError, "Something went wrong while fetching user", err)
+		return
+	}
+
+	if user == nil {
+		utils.WriteJsonErrorResponse(w, http.StatusNotFound, "User not found", fmt.Errorf("no user found with ID: %s", userId))
+		return
+	}
+
+	utils.WriteJsonSuccessResponse(w, http.StatusOK, "User fetched successfully", user)
+
 	w.Write([]byte("User fetching endpoint done"))
 }
 
@@ -30,7 +55,7 @@ func (uc *UserController) CreateUser(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Println("CreateUser called in UserController")
 
-	payload := r.Context().Value(middleware.Payload).(dto.RegisterUserDTO)
+	payload := r.Context().Value(middlewares.Payload).(dto.RegisterUserDTO)
 
 	fmt.Println("Registry Payload received", payload)
 
@@ -47,7 +72,7 @@ func (uc *UserController) LoginUser(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Println("Login-user called in UserController")
 
-	reqBodyPayload := r.Context().Value(middleware.Payload).(dto.LoginUserrequestDTO)
+	reqBodyPayload := r.Context().Value(middlewares.Payload).(dto.LoginUserrequestDTO)
 
 	fmt.Println("Payload received", reqBodyPayload)
 

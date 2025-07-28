@@ -7,7 +7,7 @@ import (
 )
 
 type UserRepository interface {
-	GetById() (*models.User, error)
+	GetById(id string) (*models.User, error)
 	Create(username string, email string, password string) error
 	GetAll() (*[]models.User, error)
 	DeleteById(id int64) error
@@ -126,7 +126,7 @@ func (u *UserRepositoryImpl) Create(username string, email string, hashedPasswor
 	return nil
 }
 
-func (u *UserRepositoryImpl) GetById() (*models.User, error) {
+func (u *UserRepositoryImpl) GetById(id string) (*models.User, error) {
 	fmt.Println("Fetching user in UserRepository")
 
 	//Step 1: Prepare the SQL query
@@ -134,7 +134,7 @@ func (u *UserRepositoryImpl) GetById() (*models.User, error) {
 	query := "SELECT id , username , email , password , created_at, updated_at FROM users WHERE id = ?"
 
 	//Step 2: Execute the query
-	row := u.db.QueryRow(query, 1)
+	row := u.db.QueryRow(query, id)
 
 	//Step 3: Process the result
 	user := &models.User{}
@@ -156,17 +156,17 @@ func (u *UserRepositoryImpl) GetById() (*models.User, error) {
 
 func (u *UserRepositoryImpl) GetUserByEmail(email string) (*models.User, error) {
 
-	query := "SELECT username,password from users where email =?"
+	query := "SELECT username,password,id from users where email =?"
 
 	row := u.db.QueryRow(query, email)
 
 	user := &models.User{}
 
-	err := row.Scan(&user.Username, &user.Password)
+	err := row.Scan(&user.Username, &user.Password, &user.Id)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			fmt.Println("No user found with the given Email ID")
-			return nil, err
+			return nil, fmt.Errorf("no user found with the given Email ID %s", email)
 		}
 		fmt.Println("Error scanning user:", err)
 		return nil, err

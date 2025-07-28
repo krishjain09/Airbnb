@@ -8,7 +8,6 @@ import (
 func main() {
 
 	config.Load()
-
 	addr := config.GetString("PORT", ":3001")
 
 	cfg := app.NewConfig(addr)

@@ -4,6 +4,7 @@ import (
 	env "AuthService/config/env"
 	db "AuthService/db/repositories"
 	"AuthService/dto"
+	"AuthService/models"
 	"AuthService/utils"
 	"fmt"
 
@@ -11,7 +12,7 @@ import (
 )
 
 type UserService interface {
-	GetUserById() error
+	GetUserById(id string) (*models.User, error)
 	Create(payload *dto.RegisterUserDTO) error
 	LoginUser(payload *dto.LoginUserrequestDTO) (string, error)
 }
@@ -26,10 +27,20 @@ func NewUserService(_userRepository db.UserRepository) UserService {
 	}
 }
 
-func (u *UserServiceImpl) GetUserById() error {
+func (u *UserServiceImpl) GetUserById(id string) (*models.User, error) {
 	fmt.Println("Fetching User in UserService")
-	u.userRepository.GetById()
-	return nil
+	user, err := u.userRepository.GetById(id)
+
+	if user == nil {
+		fmt.Println("No user found with the given ID")
+		return nil, fmt.Errorf("no user found with ID: %s", id)
+	}
+	if err != nil {
+		fmt.Println("Error fetching user by ID:", err)
+		return nil, err
+	}
+	fmt.Println("User fetched successfully:", user)
+	return user, nil
 }
 
 func (u *UserServiceImpl) Create(payload *dto.RegisterUserDTO) error {
@@ -43,7 +54,7 @@ func (u *UserServiceImpl) Create(payload *dto.RegisterUserDTO) error {
 		return err
 	}
 	err = u.userRepository.Create(username, email, hashedPassword)
-	if err!=nil{
+	if err != nil {
 		return fmt.Errorf("email already exists")
 	}
 	return nil
@@ -76,11 +87,14 @@ func (u *UserServiceImpl) LoginUser(payload *dto.LoginUserrequestDTO) (string, e
 		return "", fmt.Errorf("password does not match")
 	}
 	fmt.Println(user.Username)
+	fmt.Println(user.Id)
 	// Step 4. If password matches, print a JWT token, else return error saying password does not match
 	jwtPayload := jwt.MapClaims{
-		"email": user.Email,
-		"id":    user.Id,
+		"username": user.Username,
+		"id":       user.Id,
 	}
+
+	fmt.Println("JWT Payload:", jwtPayload)
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwtPayload)
 
