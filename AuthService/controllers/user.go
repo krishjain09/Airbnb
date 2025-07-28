@@ -2,9 +2,9 @@ package controllers
 
 import (
 	"AuthService/dto"
+	"AuthService/middleware"
 	"AuthService/services"
 	"AuthService/utils"
-
 	"fmt"
 	"net/http"
 )
@@ -27,21 +27,13 @@ func (uc *UserController) GetUserById(w http.ResponseWriter, r *http.Request) {
 }
 
 func (uc *UserController) CreateUser(w http.ResponseWriter, r *http.Request) {
+
 	fmt.Println("CreateUser called in UserController")
 
-	var payload dto.RegisterUserDTO
-
-	if jsonErr := utils.ReadJsonBody(r, &payload); jsonErr != nil {
-		utils.WriteJsonErrorResponse(w, http.StatusBadRequest, "Something went wrong while logging in", jsonErr)
-		return
-	}
+	payload := r.Context().Value(middleware.Payload).(dto.RegisterUserDTO)
 
 	fmt.Println("Registry Payload received", payload)
 
-	if validationErr := utils.Validator.Struct(&payload); validationErr != nil {
-		utils.WriteJsonErrorResponse(w, http.StatusBadRequest, "Invalid input data", validationErr)
-		return
-	}
 	err := uc.UserService.Create(&payload)
 	if err != nil {
 		utils.WriteJsonErrorResponse(w, http.StatusInternalServerError, "Something went wrong while Registering", err)
@@ -52,23 +44,14 @@ func (uc *UserController) CreateUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (uc *UserController) LoginUser(w http.ResponseWriter, r *http.Request) {
+
 	fmt.Println("Login-user called in UserController")
 
-	var payload dto.LoginUserrequestDTO
+	reqBodyPayload := r.Context().Value(middleware.Payload).(dto.LoginUserrequestDTO)
 
-	if jsonErr := utils.ReadJsonBody(r, &payload); jsonErr != nil {
-		utils.WriteJsonErrorResponse(w, http.StatusBadRequest, "Something went wrong while logging in", jsonErr)
-		return
-	}
+	fmt.Println("Payload received", reqBodyPayload)
 
-	fmt.Println("Payload received", payload)
-
-	if validationErr := utils.Validator.Struct(&payload); validationErr != nil {
-		utils.WriteJsonErrorResponse(w, http.StatusBadRequest, "Invalid input data", validationErr)
-		return
-	}
-
-	jwtToken, err := uc.UserService.LoginUser(&payload)
+	jwtToken, err := uc.UserService.LoginUser(&reqBodyPayload)
 
 	if err != nil {
 		utils.WriteJsonErrorResponse(w, http.StatusInternalServerError, "Something went wrong while logging in", err)
@@ -78,4 +61,5 @@ func (uc *UserController) LoginUser(w http.ResponseWriter, r *http.Request) {
 	utils.WriteJsonSuccessResponse(w, http.StatusOK, "User logged in successfully", jwtToken)
 
 	w.Write([]byte("Login-user fetching endpoint done"))
+
 }
