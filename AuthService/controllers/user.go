@@ -26,7 +26,7 @@ func (uc *UserController) GetUserById(w http.ResponseWriter, r *http.Request) {
 	userId := r.URL.Query().Get("id")
 
 	if userId == "" {
-		userId = r.Context().Value(middlewares.UserId).(string)
+		userId = r.Context().Value("UserId").(string)
 	}
 	if userId == "" {
 		utils.WriteJsonErrorResponse(w, http.StatusBadRequest, "User ID is required", nil)

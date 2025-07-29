@@ -11,13 +11,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-type usernameKey string
 
-const Username usernameKey = "username"
-
-type userIdKey string
-
-const UserId userIdKey = "userId"
 
 func JWTAuthMiddleWare(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -63,8 +57,8 @@ func JWTAuthMiddleWare(next http.Handler) http.Handler {
 
 		req_context := r.Context()
 
-		ctx := context.WithValue(req_context, Username, username)
-		ctx = context.WithValue(ctx, UserId, strconv.FormatFloat(userId, 'f', 0, 64))
+		ctx := context.WithValue(req_context, "Username", username)
+		ctx = context.WithValue(ctx, "UserId", strconv.FormatFloat(userId, 'f', 0, 64))
 
 		next.ServeHTTP(w, r.WithContext(ctx))
 

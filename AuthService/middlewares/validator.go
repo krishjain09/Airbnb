@@ -9,6 +9,7 @@ import (
 )
 
 type payloadkey string
+
 const Payload payloadkey = "payload"
 
 func UserLoginRequestValidator(next http.Handler) http.Handler {
