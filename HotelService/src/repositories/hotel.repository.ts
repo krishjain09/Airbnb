@@ -62,7 +62,7 @@ export async function softDeleteHotel(id: number){
     }
 
     hotel.deletedAt = new Date();
-    await hotel.save();
+    await hotel.save(); //Save changes to database.
 
     logger.info(`Hotel soft deleted ${hotel.id}`);
     return true;
