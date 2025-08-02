@@ -1,5 +1,5 @@
 MIGRATIONS_DIR=db/migrations
-DB_URL=root:krishjain123@tcp(172.16.174.84:3306)/auth_dev
+DB_URL=root:krishjain123@tcp(172.25.48.1:3306)/auth_dev
 
 # Create a new migration -> gmake migrate-create name=create_entity_table
 migrate-create:

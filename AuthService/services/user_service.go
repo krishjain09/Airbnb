@@ -7,7 +7,6 @@ import (
 	"AuthService/models"
 	"AuthService/utils"
 	"fmt"
-
 	"github.com/golang-jwt/jwt/v5"
 )
 

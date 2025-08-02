@@ -53,7 +53,7 @@ func UserCreateRequestValidator(next http.Handler) http.Handler {
 		fmt.Println("payload received", payload)
 
 		req_context := r.Context() // Original context coming from the request
-
+		
 		ctx := context.WithValue(req_context, Payload, payload)
 
 		next.ServeHTTP(w, r.WithContext(ctx))
