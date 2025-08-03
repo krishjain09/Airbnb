@@ -148,3 +148,49 @@ func RemovePermissionRequestValidator(next http.Handler) http.Handler {
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
+
+func AssignRoleRequestValidator(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fmt.Println("1st middleware called")
+		var payload dto.AssignRoleRequestDTO
+
+		if err := utils.ReadJsonBody(r, &payload); err != nil {
+			utils.WriteJsonErrorResponse(w, http.StatusBadRequest, "Invalid request body err", err)
+			return
+		}
+
+		if err := utils.Validator.Struct(&payload); err != nil {
+			utils.WriteJsonErrorResponse(w, http.StatusUnauthorized, "Validation failed", err)
+			return
+		}
+
+		fmt.Println("Payload received: ", payload.RoleId)
+
+		ctx := context.WithValue(r.Context(), Payload, payload)
+
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
+
+func RemoveRoleRequestValidator(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+		var payload dto.RemoveRoleRequestDTO
+
+		if err := utils.ReadJsonBody(r, &payload); err != nil {
+			utils.WriteJsonErrorResponse(w, http.StatusBadRequest, "Invalid request body err", err)
+			return
+		}
+
+		if err := utils.Validator.Struct(&payload); err != nil {
+			utils.WriteJsonErrorResponse(w, http.StatusUnauthorized, "Validation failed", err)
+			return
+		}
+
+		fmt.Println("Payload received: ", payload)
+
+		ctx := context.WithValue(r.Context(), Payload, payload)
+
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}

@@ -7,6 +7,7 @@ import (
 	"AuthService/models"
 	"AuthService/utils"
 	"fmt"
+
 	"github.com/golang-jwt/jwt/v5"
 )
 
@@ -18,11 +19,13 @@ type UserService interface {
 
 type UserServiceImpl struct {
 	userRepository db.UserRepository
+	roleService    RoleService
 }
 
-func NewUserService(_userRepository db.UserRepository) UserService {
+func NewUserService(_userRepository db.UserRepository, _roleService RoleService) UserService {
 	return &UserServiceImpl{
 		userRepository: _userRepository,
+		roleService:    _roleService,
 	}
 }
 
@@ -38,7 +41,6 @@ func (u *UserServiceImpl) GetUserById(id string) (*models.User, error) {
 		fmt.Println("Error fetching user by ID:", err)
 		return nil, err
 	}
-	fmt.Println("User fetched successfully:", user)
 	return user, nil
 }
 
@@ -52,10 +54,25 @@ func (u *UserServiceImpl) Create(payload *dto.RegisterUserDTO) error {
 		fmt.Println("Error in hashing password", err)
 		return err
 	}
-	err = u.userRepository.Create(username, email, hashedPassword)
+	id, err := u.userRepository.Create(username, email, hashedPassword)
+
+	if id == -1 {
+		fmt.Println("Error creating user, no rows affected")
+		return fmt.Errorf("error creating user, no rows affected")
+	}
 	if err != nil {
 		return fmt.Errorf("email already exists")
 	}
+
+	roleId := 2 //Assuming 2 is the default role ID for a new user
+
+	AssignRoleErr := u.roleService.AssignRoleToUser(id, int64(roleId))
+
+	if AssignRoleErr != nil {
+		fmt.Println("Error assigning role to user:", AssignRoleErr)
+		return AssignRoleErr
+	}
+
 	return nil
 }
 

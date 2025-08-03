@@ -17,3 +17,10 @@ type AssignPermissionRequestDTO struct {
 type RemovePermissionRequestDTO struct {
 	PermissionId int64 `json:"permission_id" validate:"required"`
 }
+
+type AssignRoleRequestDTO struct {
+	RoleId int64 `json:"role_id" validate:"required"`
+}
+type RemoveRoleRequestDTO struct {
+	RoleId int64 `json:"role_id" validate:"required"`
+}

@@ -8,7 +8,7 @@ import (
 
 type UserRepository interface {
 	GetById(id string) (*models.User, error)
-	Create(username string, email string, password string) error
+	Create(username string, email string, password string) (id int64, err error)
 	GetAll() (*[]models.User, error)
 	DeleteById(id int64) error
 	GetUserByEmail(email string) (*models.User, error)
@@ -92,14 +92,14 @@ func (u *UserRepositoryImpl) GetAll() (*[]models.User, error) {
 	return &users, nil
 }
 
-func (u *UserRepositoryImpl) Create(username string, email string, hashedPassword string) error {
+func (u *UserRepositoryImpl) Create(username string, email string, hashedPassword string) (id int64,err error){
 	fmt.Println("Creating user in repository")
 
 	emailAlreadyExists, err := u.GetUserByEmail(email)
 
 	if emailAlreadyExists != nil {
 		fmt.Println("Email already exists. Please login..", emailAlreadyExists.Email, err)
-		return fmt.Errorf("email already exists. Please login")
+		return -1,fmt.Errorf("email already exists. Please login")
 	}
 
 	query := "Insert into users(username,email,password) values(?,?,?)"
@@ -109,21 +109,26 @@ func (u *UserRepositoryImpl) Create(username string, email string, hashedPasswor
 
 	if err != nil {
 		fmt.Println("Error inserting user:", err)
-		return err
+		return -1,err
 	}
 
 	if rowErr != nil {
 		fmt.Println("Error getting rows affected:", rowErr)
-		return rowErr
+		return -1,rowErr
 	}
 
 	if rowsAffected == 0 {
 		fmt.Println("No rows were affected, user not created")
-		return nil
+		return -1,nil
 	}
-
 	fmt.Println("User created successfully, rows affected:", rowsAffected)
-	return nil
+	
+	id,idErr:=result.LastInsertId()
+	fmt.Println("Id: ",id);
+	if(idErr!=nil){
+		return -1,idErr;
+	}
+	return id,idErr
 }
 
 func (u *UserRepositoryImpl) GetById(id string) (*models.User, error) {
