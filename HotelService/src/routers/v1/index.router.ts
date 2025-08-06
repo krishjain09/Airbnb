@@ -1,7 +1,7 @@
 import express from 'express';
 import hotelRouter from './hotel.router';
 import { pingHandler } from '../../controllers/ping.controller';
-import roomRouter  from './room.router';
+import roomRouter  from './roomGeneration.router';
 
 const v1Router = express.Router();
 

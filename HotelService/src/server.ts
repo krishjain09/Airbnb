@@ -6,6 +6,7 @@ import { appErrorHandler, genericErrorHandler } from './middlewares/error.middle
 import logger from './config/logger.config';
 import { attachCorrelationIdMiddleware } from './middlewares/correlation.middleware';
 import sequelize from './db/models/sequelize';
+import { setupRoomGenerationWorker } from './processors/roomGeneration.processor';
 // import Hotel from './db/models/hotel';
 
 const app = express();
@@ -35,16 +36,7 @@ app.listen(serverConfig.PORT, async () => {
     try{
         await sequelize.authenticate(); //Test the connection to the database
         console.log("Database connection has been established successfully.")
-
-        // const hotel = await Hotel.create({
-        //     name : "Hotel New York",
-        //     address : "123 Main St,New York",
-        //     location : "New York",
-        //     ratings : 4.8,
-        //     ratingCount: 108
-        // })
-
-        // console.log("Hotel: " ,hotel.toJSON());
+        setupRoomGenerationWorker();
     }
     catch(error){
         console.log("Something went wrong...");
