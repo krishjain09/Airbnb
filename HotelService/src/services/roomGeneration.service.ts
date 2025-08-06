@@ -37,7 +37,7 @@ export async function generateRooms(jobData : RoomGenerationJob){
         throw new BadRequestError(`Start date must be in the future`);
     }
 
-    const totalDays = Math.ceil((endDate.getTime()-startDate.getTime())/1000*60*60*24);
+    const totalDays = Math.ceil((endDate.getTime()-startDate.getTime())/(1000*60*60*24));
 
     logger.info(`Generating rooms for ${totalDays} days`);
 
@@ -45,14 +45,17 @@ export async function generateRooms(jobData : RoomGenerationJob){
     
     const currentDate = new Date(startDate);
 
+    console.log("Batchsize: ",batchSize);
+
     while(currentDate < endDate){
         const batchEndDate = new Date(currentDate);
         batchEndDate.setDate(batchEndDate.getDate()+batchSize);
 
         if (batchEndDate > endDate){
-            batchEndDate.setDate(endDate.getDate());
+            batchEndDate.setTime(endDate.getTime());
         }
 
+        
         const batchResult = await processDateBatch(roomCategory, currentDate, batchEndDate, jobData.priceOverride);
 
         totalRoomsCreated += batchResult.roomsCreated;
@@ -107,10 +110,12 @@ export async function processDateBatch(roomCategory : RoomCategory,startDate : D
         logger.info(`Creating ${roomsToCreate.length} rooms`);
         await roomRepository.bulkCreate(roomsToCreate);
         roomsCreated += roomsToCreate.length;
+        console.log("Rooms Created: ",roomsCreated);
     }
 
     return {
         roomsCreated,
         datesProcessed,
     }
+    
 }

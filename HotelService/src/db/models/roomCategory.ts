@@ -28,6 +28,7 @@ RoomCategory.init(
             type :"INTEGER",
             autoIncrement : true,
             allowNull : false,
+            primaryKey : true,
         },
         roomType:{
             type : "ENUM",
