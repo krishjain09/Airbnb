@@ -1,0 +1,12 @@
+{
+    "prettier.bracketSameLine": true,
+    "prettier.enableDebugLogs": true,
+    "prettier.insertPragma": true,
+    "prettier.jsxSingleQuote": true,
+    "prettier.requireConfig": true,
+    "prettier.requirePragma": true,
+    "prettier.resolveGlobalModules": true,
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "notebook.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": true,
+}

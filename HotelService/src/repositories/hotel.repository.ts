@@ -6,7 +6,7 @@ import BaseRepository from "./base.repository";
 class HotelRepository extends BaseRepository<Hotel>{
     
     constructor(){
-        super(Hotel)
+        super(Hotel);
     }
 
     async findAll(){
