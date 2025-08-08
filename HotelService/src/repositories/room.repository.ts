@@ -20,6 +20,25 @@ class RoomRepository extends BaseRepository<Room>{
      async bulkCreate(rooms: CreationAttributes<Room>[]){
         return await this.model.bulkCreate(rooms);
      }
+
+     async findLatestDatesForAllCategories() : Promise<Array<{roomCategoryId : number,latestDate : Date}>>{
+        const results = await this.model.findAll({
+            where: {
+                deletedAt : null
+            },
+            attributes: [
+                'roomCategoryId',
+                [this.model.sequelize!.fn('MAX', this.model.sequelize!.col('date_of_availability')), 'latestDate']
+            ],
+            group: ['roomCategoryId'],
+            raw: true
+        });
+
+        return results.map((result: any) => ({
+            roomCategoryId: result.roomCategoryId,
+            latestDate: new Date(result.latestDate)
+        }));
+     }  
 }
 
 export default RoomRepository;

@@ -7,7 +7,8 @@ import logger from './config/logger.config';
 import { attachCorrelationIdMiddleware } from './middlewares/correlation.middleware';
 import sequelize from './db/models/sequelize';
 import { setupRoomGenerationWorker } from './processors/roomGeneration.processor';
-// import Hotel from './db/models/hotel';
+import { startScheduler } from './scheduler/scheduler';
+
 
 const app = express();
 app.use(express.json());
@@ -37,8 +38,11 @@ app.listen(serverConfig.PORT, async () => {
         await sequelize.authenticate(); //Test the connection to the database
         console.log("Database connection has been established successfully.")
         setupRoomGenerationWorker();
+        startScheduler();
+        logger.info('Room availability extension scheduler initialized');
     }
     catch(error){
         console.log("Something went wrong...");
     }
+    
 });

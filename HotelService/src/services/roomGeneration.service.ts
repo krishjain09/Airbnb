@@ -41,7 +41,7 @@ export async function generateRooms(jobData : RoomGenerationJob){
 
     logger.info(`Generating rooms for ${totalDays} days`);
 
-    const batchSize = jobData.batchSize | 100;
+    const batchSize = jobData.batchSize || 100;
     
     const currentDate = new Date(startDate);
 
