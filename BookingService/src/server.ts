@@ -4,7 +4,8 @@ import v1Router from './routers/v1/index.router';
 import v2Router from './routers/v2/index.router';
 import { appErrorHandler, genericErrorHandler } from './middlewares/error.middleware';
 import logger from './config/logger.config';
-import { attachCorrelationIdMiddleware } from './middlewares/correlation.middleware';
+// import { attachCorrelationIdMiddleware } from './middlewares/correlation.middleware';
+import { startScheduler1 } from './schedulers/scheduler';
 // import { addEmailToQueue } from './producers/email.producer';
 const app = express();
 
@@ -14,7 +15,7 @@ app.use(express.json());
  * Registering all the routers and their corresponding routes with out app server object.
  */
 
-app.use(attachCorrelationIdMiddleware);
+// app.use(attachCorrelationIdMiddleware);
 app.use('/api/v1', v1Router);
 app.use('/api/v2', v2Router); 
 
@@ -27,7 +28,7 @@ app.use(appErrorHandler);
 app.use(genericErrorHandler);
 
 
-app.listen(serverConfig.PORT,'0.0.0.0', () => {
+app.listen(serverConfig.PORT,'0.0.0.0', async () => {
     console.log("PORT BEING USED:", serverConfig.PORT);
     logger.info(`Server is running on http://0.0.0.0:${serverConfig.PORT}`);
     logger.info(`Press Ctrl+C to stop the server.`);
@@ -41,5 +42,7 @@ app.listen(serverConfig.PORT,'0.0.0.0', () => {
     //         orderId : 1234
     //     }
     // })
-    
+
+    await startScheduler1();
+    logger.info('Scheduler initialized');
 });

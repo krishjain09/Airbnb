@@ -41,7 +41,7 @@ func ProxyToService(targetBaseUrl string, pathPrefix string) http.HandlerFunc {
 
 
 		fmt.Println("Entire url:", r.URL.String())
-		if userId, ok := r.Context().Value("userId").(string); ok {
+		if userId, ok := r.Context().Value("UserId").(string); ok {
 			r.Header.Set("X-User-ID", userId)
 		}
 	}

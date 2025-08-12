@@ -12,8 +12,8 @@ export async function createBookingHandler(req: Request, res: Response){
 }
 
 export async function confirmBookingHandler(req: Request, res: Response){
-
-    const booking= await confirmBookingService(req.params.idempotencyKey);
+    const authHeader : string | undefined = req.headers.authorization;
+    const booking= await confirmBookingService(req.params.idempotencyKey,authHeader);
 
     res.status(201).json({
         bookingId : booking.id,

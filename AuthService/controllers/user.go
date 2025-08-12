@@ -48,7 +48,6 @@ func (uc *UserController) GetUserById(w http.ResponseWriter, r *http.Request) {
 
 	utils.WriteJsonSuccessResponse(w, http.StatusOK, "User fetched successfully", user)
 
-	w.Write([]byte("User fetching endpoint done"))
 }
 
 func (uc *UserController) CreateUser(w http.ResponseWriter, r *http.Request) {

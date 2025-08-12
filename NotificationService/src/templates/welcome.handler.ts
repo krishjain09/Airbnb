@@ -14,3 +14,4 @@ export async function renderMailTemplate(templateId : string, params : Record<st
         throw new InternalServerError(`Error rendering mail template: ${e}`)
     }
 }
+

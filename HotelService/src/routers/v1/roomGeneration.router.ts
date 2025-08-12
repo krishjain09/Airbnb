@@ -4,8 +4,8 @@ import { RoomGenerationJobSchema } from "../../dto/roomGeneration.dto";
 import { createRoomHandler } from "../../controllers/roomGeneration.controller";
 
 
-const roomRouter = Router();
+const roomGenerationRouter = Router();
 
-roomRouter.post('/',validateRequestBody(RoomGenerationJobSchema),createRoomHandler);
+roomGenerationRouter.post('/',validateRequestBody(RoomGenerationJobSchema),createRoomHandler);
 
-export default roomRouter;
+export default roomGenerationRouter;

@@ -14,6 +14,7 @@ import (
 )
 
 func JWTAuthMiddleWare(next http.Handler) http.Handler {
+	
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		authHeader := r.Header.Get("Authorization")
 
@@ -23,7 +24,7 @@ func JWTAuthMiddleWare(next http.Handler) http.Handler {
 		}
 
 		if !strings.HasPrefix(authHeader, "Bearer ") {
-			http.Error(w, "Authorization Header muststart with Bearer", http.StatusUnauthorized)
+			http.Error(w, "Authorization Header must start with Bearer", http.StatusUnauthorized)
 			return
 		}
 
@@ -59,9 +60,7 @@ func JWTAuthMiddleWare(next http.Handler) http.Handler {
 
 		ctx := context.WithValue(req_context, "Username", username)
 		ctx = context.WithValue(ctx, "UserId", strconv.FormatFloat(userId, 'f', 0, 64))
-
 		next.ServeHTTP(w, r.WithContext(ctx))
-
 	})
 }
 

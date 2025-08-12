@@ -28,6 +28,16 @@ export async function createIdempotencyKey(key: string, bookingId: number) {
     return idempotencyKey;
 }
 
+export async function deleteIdempotencyKey(id: number) {
+    const idempotencyKey = await prismaClient.idempotencyKey.delete({
+        where: {
+            bookingId: id
+        }
+    });
+
+    return idempotencyKey;
+}
+
 export async function getIdempotencyKeyWithLock(tx: Prisma.TransactionClient, key: string) {
     if(!isValidUUID(key)) {
         throw new BadRequestError("Invalid idempotency key format");
@@ -90,4 +100,16 @@ export async function finalizeIdempotencyKey(tx:Prisma.TransactionClient,key: st
     return idempotencyKey;
 }
 
+export async function getsExpiredBookings(){
+    const fiveMinutesAgo = new Date(Date.now() - 5*60*1000);
+    const expiredBookings = await prismaClient.booking.findMany({
+        where:{
+            createdAt: {
+                lt: fiveMinutesAgo
+            },
+            status: "PENDING"
+        }
+    });
+    return expiredBookings;
+}
 

@@ -6,8 +6,9 @@ import { appErrorHandler, genericErrorHandler } from './middlewares/error.middle
 import logger from './config/logger.config';
 import { attachCorrelationIdMiddleware } from './middlewares/correlation.middleware';
 import { setupMailerWorker } from './processors/email.processor';
-import { addEmailToQueue } from './producers/email.producer';
-import { NotificationDto } from './dto/notification.dto';
+// import { addEmailToQueue } from './producers/email.producer';
+// import { NotificationDto } from './dto/notification.dto';
+
 const app = express();
 
 app.use(express.json());
@@ -29,20 +30,30 @@ app.use(appErrorHandler);
 app.use(genericErrorHandler);
 
 
-app.listen(serverConfig.PORT, () => {
+app.listen(serverConfig.PORT, async () => {
     logger.info(`Server is running on http://localhost:${serverConfig.PORT}`);
     logger.info(`Press Ctrl+C to stop the server.`);
     setupMailerWorker(); 
     logger.info(`Mailer worker setup completed.`);
 
-    const payload : NotificationDto = {
-        to: "Sample-Test",
-        subject: "Test Email",
-        templateId: "welcome",
-        params: {
-            name: "Krish Jain",
-            orderId: 123
-        }
-    }
-    addEmailToQueue(payload);
+    // const payload : NotificationDto = {
+    //     to: "Sample-Test",
+    //     subject: "Test Email",
+    //     templateId: "welcome",
+    //     params: {
+    //         name: "Krish Jain",
+    //         orderId: 123
+    //     }
+    // }
+    // addEmailToQueue(payload);
+
+    // addEmailToQueue({
+    //     to: "krishj19731@gmail.com",
+    //     subject: "Test Email",
+    //     templateId: "welcome",
+    //     params:{
+    //         name : "Krish Jain",
+    //         appName : "Booking.com"
+    //     }
+    // });
 });

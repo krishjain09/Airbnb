@@ -5,11 +5,13 @@ import { BadRequestError, NotFoundError } from "../utils/errors/app.error";
 import { generateIdempotencyKey } from "../utils/generateIdempotencyKey";
 import { redlock } from "../config/redis.config";
 import { serverConfig } from "../config";
-import { getAvailableRooms, updateBookingIdToRooms } from "../gateway/hotel.gateway";
+import { getAvailableRooms, getUserProfile, updateBookingIdToRooms } from "../gateway/hotel.gateway";
+import { addEmailToQueue } from "../producers/email.producer";
 
 function groupByDate(rooms: any[]): Record<string, any[]> {
+    console.log("groupByDate is executed?");
     return rooms.reduce((acc: Record<string, any[]>, room: any) => {
-        const dateStr = new Date(room.date_of_availability).toISOString().split('T')[0];
+        const dateStr = new Date(room.dateOfAvailability).toISOString().split('T')[0];
         acc[dateStr] = acc[dateStr] || [];
         acc[dateStr].push(room);
         return acc;
@@ -17,6 +19,7 @@ function groupByDate(rooms: any[]): Record<string, any[]> {
 }
 
 function getDatesBetween(startDate: string, endDate: string): string[] {
+    console.log("get dates between executed");
     const start = new Date(startDate);
     const end = new Date(endDate);
     const dates: string[] = [];
@@ -24,7 +27,7 @@ function getDatesBetween(startDate: string, endDate: string): string[] {
     for (let dt = start; dt < end; dt.setDate(dt.getDate() + 1)) {
         dates.push(dt.toISOString().split('T')[0]);
     }
-
+    console.log("Successfully get dates between executed");
     return dates;
 }
 
@@ -33,10 +36,11 @@ export async function createBookingService(createBookingDTO : CreateBookingDTO,u
     const {checkInDate, checkOutDate, hotelId, roomCategoryId} = createBookingDTO;
 
     const allAvailableRooms = await getAvailableRooms(Number(roomCategoryId),checkInDate,checkOutDate);
-
+    console.log("All available rooms:", allAvailableRooms);
     const availabilityByDate =  groupByDate(allAvailableRooms);
-
+    console.log("Availability by date:", availabilityByDate);
     const requiredDates = getDatesBetween(checkInDate,checkOutDate);
+    console.log("Required Dates: ", requiredDates)
 
     for(const date of requiredDates){
         if(!availabilityByDate[date] || availabilityByDate[date].length === 0){
@@ -72,13 +76,13 @@ export async function createBookingService(createBookingDTO : CreateBookingDTO,u
             totalGuests: createBookingDTO.totalGuests,
             checkInDate : new Date(createBookingDTO.checkInDate),
             checkOutDate: new Date(createBookingDTO.checkOutDate),
-            roomCategoryId : Number(createBookingDTO.roomCategoryId)
+            roomCategoryId : Number(createBookingDTO.roomCategoryId),
+            status : "PENDING",
         });
 
         const idempotencyKey = generateIdempotencyKey();
         console.log(idempotencyKey);
         await createIdempotencyKey(idempotencyKey,booking.id);
-
         await updateBookingIdToRooms(booking.id,roomsToBook);
 
         return {
@@ -91,14 +95,10 @@ export async function createBookingService(createBookingDTO : CreateBookingDTO,u
     }
 }
 
-
-
-
-export async function confirmBookingService(key: string){
+export async function confirmBookingService(key: string,authHeader : string|undefined){
     
     return await prismaClient.$transaction(async(tx)=>{
         const idempotencyKeyData =await getIdempotencyKeyWithLock(tx,key);
-
         if(!idempotencyKeyData || !idempotencyKeyData.bookingId){
             throw new NotFoundError("Idempotency Key Not Found!");
         }
@@ -109,7 +109,20 @@ export async function confirmBookingService(key: string){
 
         const booking =await confirmBooking(tx,idempotencyKeyData.bookingId);
         await finalizeIdempotencyKey(tx,key);
-
+ 
+        const user = await getUserProfile(authHeader);
+        
+        const payload = {
+            to: user.data.Email,
+            subject: "Booking Confirmation",
+            templateId : "confirmed_booking",
+            params:{
+                name : user.data.Username
+            }
+        }
+        addEmailToQueue(payload);
         return booking;
     });
 }
+
+

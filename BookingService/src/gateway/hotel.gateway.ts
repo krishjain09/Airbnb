@@ -10,8 +10,8 @@ export const getAvailableRooms = async (roomCategoryId : number, checkInDate: st
             checkOutDate,
         }
     });
-    
-    return response.data;
+    console.log("Available rooms response:", response.data.data);
+    return response.data.data;
 }
 
 export const updateBookingIdToRooms = async(bookingId: number,roomIds: number[])=>{
@@ -20,5 +20,23 @@ export const updateBookingIdToRooms = async(bookingId: number,roomIds: number[])
         bookingId,
         roomIds
     })
+    return response.data;
+}
+
+export const updateBookingIdToRoomsAsNULL = async(bookingId: number)=>{
+    
+    const response = await axios.post(`${serverConfig.HOTEL_SERVICE_URL}rooms/update-booking-id-null`,{
+        bookingId
+    })
+    return response.data;
+}
+
+export const getUserProfile = async (authHeader :string|undefined ) => {
+    const response = await axios.get(`${serverConfig.AUTH_SERVICE_URL}profile`,{
+        headers: {
+            Authorization: authHeader
+        }
+    });
+    console.log("User profile response:", response.data);
     return response.data;
 }
