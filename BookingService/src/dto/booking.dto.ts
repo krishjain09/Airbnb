@@ -1,6 +1,5 @@
 export type CreateBookingDTO = {
-    hotelId: number,
-    bookingAmount : number , 
+    hotelId: number, 
     totalGuests : number,
     checkInDate : string,
     checkOutDate : string,

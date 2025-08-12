@@ -21,3 +21,11 @@ export async function createRoomCategoryService(roomCategoryData:createRoomCateg
     const roomCategory = await roomCategoryRepository.create(roomCategoryData);
     return roomCategory;
 } 
+
+export async function getRoomCategoryByIdService(id: number) {
+    const roomCategory = await roomCategoryRepository.findById(id);
+    if (!roomCategory) {
+        throw new NotFoundError(`No room category found with given id ${id}`);
+    }
+    return roomCategory;
+}

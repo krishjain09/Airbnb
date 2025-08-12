@@ -38,29 +38,34 @@ export async function deleteIdempotencyKey(id: number) {
     return idempotencyKey;
 }
 
-export async function getIdempotencyKeyWithLock(tx: Prisma.TransactionClient, key: string) {
-    if(!isValidUUID(key)) {
+export async function getIdempotencyKey(tx: Prisma.TransactionClient, key: string) {
+    if (!isValidUUID(key)) {
         throw new BadRequestError("Invalid idempotency key format");
     }
 
-    const idempotencyKey: Array<IdempotencyKey> = await tx.$queryRaw(
-        Prisma.raw(`SELECT * FROM IdempotencyKey WHERE idemKey = '${key}' FOR UPDATE;`)
-    )
+    const idempotencyKey = await tx.$queryRaw<IdempotencyKey[]>`
+        SELECT * FROM \`IdempotencyKey\`
+        WHERE \`idemKey\` = ${key};
+    `;
+
     console.log(idempotencyKey);
-    if(!idempotencyKey || idempotencyKey.length === 0) {
+
+    if (!idempotencyKey || idempotencyKey.length === 0) {
         throw new NotFoundError("Idempotency key not found");
     }
 
     return idempotencyKey[0];
 }
 
+
+
 export async function getBookingId(booking: number){
-    const bookingId = await prismaClient.booking.findUnique({
+    const bookingRecord = await prismaClient.booking.findUnique({
         where: {
             id:booking
         }
     });
-    return bookingId;
+    return bookingRecord;
 }
 
 export async function confirmBooking(tx : Prisma.TransactionClient,bookingId: number){

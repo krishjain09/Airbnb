@@ -1,15 +1,16 @@
 import prismaClient from "../prisma/client";
 import { CreateBookingDTO } from "../dto/booking.dto";
-import {getIdempotencyKeyWithLock,confirmBooking,finalizeIdempotencyKey,createBooking,createIdempotencyKey} from "../repositories/booking.repository"
+import {getIdempotencyKey,confirmBooking,finalizeIdempotencyKey,createBooking,createIdempotencyKey, getBookingId, cancelBooking, deleteIdempotencyKey} from "../repositories/booking.repository"
 import { BadRequestError, NotFoundError } from "../utils/errors/app.error";
 import { generateIdempotencyKey } from "../utils/generateIdempotencyKey";
 import { redlock } from "../config/redis.config";
 import { serverConfig } from "../config";
-import { getAvailableRooms, getUserProfile, updateBookingIdToRooms } from "../gateway/hotel.gateway";
+import { getAvailableRooms, getRoomCategory, getUserProfile, updateBookingIdToRooms, updateBookingIdToRoomsAsNULL } from "../gateway/hotel.gateway";
 import { addEmailToQueue } from "../producers/email.producer";
+import { addCancelBookingEmailToQueue } from "../producers/email.cancel.booking.producer";
+
 
 function groupByDate(rooms: any[]): Record<string, any[]> {
-    console.log("groupByDate is executed?");
     return rooms.reduce((acc: Record<string, any[]>, room: any) => {
         const dateStr = new Date(room.dateOfAvailability).toISOString().split('T')[0];
         acc[dateStr] = acc[dateStr] || [];
@@ -36,11 +37,11 @@ export async function createBookingService(createBookingDTO : CreateBookingDTO,u
     const {checkInDate, checkOutDate, hotelId, roomCategoryId} = createBookingDTO;
 
     const allAvailableRooms = await getAvailableRooms(Number(roomCategoryId),checkInDate,checkOutDate);
-    console.log("All available rooms:", allAvailableRooms);
+
     const availabilityByDate =  groupByDate(allAvailableRooms);
-    console.log("Availability by date:", availabilityByDate);
+ 
     const requiredDates = getDatesBetween(checkInDate,checkOutDate);
-    console.log("Required Dates: ", requiredDates)
+    
 
     for(const date of requiredDates){
         if(!availabilityByDate[date] || availabilityByDate[date].length === 0){
@@ -69,10 +70,16 @@ export async function createBookingService(createBookingDTO : CreateBookingDTO,u
                 throw new BadRequestError(`No rooms available for the date: ${date}`);
             }
         }
+
+        const roomCategory = await getRoomCategory(Number(roomCategoryId));
+        const totalNights = roomsToBook.length;
+        const bookingAmt = (totalNights * roomCategory.data.price);
+        console.log("Booking Amount : ", bookingAmt);
+
         const booking = await createBooking({
             userId: userId,
             hotelId: hotelId,
-            bookingAmount: createBookingDTO.bookingAmount,
+            bookingAmount: bookingAmt,
             totalGuests: createBookingDTO.totalGuests,
             checkInDate : new Date(createBookingDTO.checkInDate),
             checkOutDate: new Date(createBookingDTO.checkOutDate),
@@ -83,6 +90,7 @@ export async function createBookingService(createBookingDTO : CreateBookingDTO,u
         const idempotencyKey = generateIdempotencyKey();
         console.log(idempotencyKey);
         await createIdempotencyKey(idempotencyKey,booking.id);
+        console.log("Sucessfully created IdempotencyKey");
         await updateBookingIdToRooms(booking.id,roomsToBook);
 
         return {
@@ -94,35 +102,91 @@ export async function createBookingService(createBookingDTO : CreateBookingDTO,u
         await Promise.all(locks.map(lock => lock.release()));
     }
 }
+export async function confirmBookingService(key: string, authHeader: string | undefined) {
+    // Phase 1: DB updates
+    const booking = await prismaClient.$transaction(async (tx) => {
+        const idempotencyKeyData = await getIdempotencyKey(tx, key);
+        if (!idempotencyKeyData?.bookingId) throw new NotFoundError("Idempotency Key Not Found!");
 
-export async function confirmBookingService(key: string,authHeader : string|undefined){
-    
-    return await prismaClient.$transaction(async(tx)=>{
-        const idempotencyKeyData =await getIdempotencyKeyWithLock(tx,key);
-        if(!idempotencyKeyData || !idempotencyKeyData.bookingId){
-            throw new NotFoundError("Idempotency Key Not Found!");
-        }
+        if (idempotencyKeyData.finalized) throw new BadRequestError("Idempotency Key already finalized");
 
-        if(idempotencyKeyData.finalized){
-            throw new BadRequestError("Idempotency Key already finalized");
-        }
+        const booking = await confirmBooking(tx, idempotencyKeyData.bookingId);
+        await finalizeIdempotencyKey(tx, key);
 
-        const booking =await confirmBooking(tx,idempotencyKeyData.bookingId);
-        await finalizeIdempotencyKey(tx,key);
- 
-        const user = await getUserProfile(authHeader);
-        
-        const payload = {
-            to: user.data.Email,
-            subject: "Booking Confirmation",
-            templateId : "confirmed_booking",
-            params:{
-                name : user.data.Username
-            }
-        }
-        addEmailToQueue(payload);
         return booking;
     });
+
+    // Phase 2: External calls (outside transaction)
+    await updateBookingIdToRoomsAsNULL(booking.id);
+
+    const user = await getUserProfile(authHeader);
+    addEmailToQueue({
+        to: user.data.Email,
+        subject: "Booking Confirmation",
+        templateId: "confirmed_booking",
+        params: { name: user.data.Username }
+    });
+
+    return booking;
 }
 
+export async function cancelBookingService(key: string, authHeader: string | undefined) {
+    // Phase 1: Only DB work inside transaction
+    const { bookingRecord, penalty } = await prismaClient.$transaction(async (tx) => {
+        console.log("Transaction started for cancelBookingService");
 
+        const idempotencyKeyData = await getIdempotencyKey(tx, key);
+        if (!idempotencyKeyData?.bookingId) {
+        throw new NotFoundError("Idempotency Key Not Found!");
+        }
+
+        const bookingId = idempotencyKeyData.bookingId;
+        let bookingRecord = await getBookingId(bookingId);
+        if (!bookingRecord) throw new NotFoundError("Booking Not Found!");
+
+        let currentDate = new Date();
+        if (currentDate >= bookingRecord.checkInDate) {
+        throw new BadRequestError("Cannot cancel booking after check-in date");
+        }
+
+        if (bookingRecord.status === "CANCELLED") {
+        throw new BadRequestError("Booking already cancelled");
+        }
+        
+        let diffInDate = Math.floor((bookingRecord.checkInDate.getTime() - currentDate.getTime()) / (1000 * 60 * 60 * 24));
+        let penalty = 0.25 * bookingRecord.bookingAmount;
+        
+        if (diffInDate === 1) {
+        penalty = 0.5 * bookingRecord.bookingAmount;
+        }
+
+        bookingRecord = await cancelBooking(bookingId);
+        await deleteIdempotencyKey(bookingId);
+
+        return { bookingRecord, penalty };
+    }, { timeout: 180000 }); // 3 minutes timeout
+
+    await updateBookingIdToRoomsAsNULL(bookingRecord.id);
+
+    // Phase 2: External calls (safe outside transaction)
+    const user = await getUserProfile(authHeader);
+
+    const payload = {
+        to: user.data.Email,
+        subject: "Booking Cancellation",
+        templateId: "cancelled_booking",
+        params: {
+        name: user.data.Username,
+        penalty: penalty,
+        supportEmail: "support@airbnb.com",
+        supportPhone: "+1-234-567-890"
+        }
+    };
+
+    addCancelBookingEmailToQueue(payload);
+
+    return {
+        id: bookingRecord.id,
+        status: bookingRecord.status
+    };
+}

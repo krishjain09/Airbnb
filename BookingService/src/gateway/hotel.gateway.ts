@@ -40,3 +40,9 @@ export const getUserProfile = async (authHeader :string|undefined ) => {
     console.log("User profile response:", response.data);
     return response.data;
 }
+
+export const getRoomCategory = async (id: number) => {
+    const response = await axios.get(`${serverConfig.HOTEL_SERVICE_URL}room-category/${id}`);
+    console.log("Room category response:", response.data);
+    return response.data;
+}

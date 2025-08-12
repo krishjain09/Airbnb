@@ -12,7 +12,7 @@ export async function startScheduler1() : Promise<void> {
         return;
     }
 
-    cronJob = cron.schedule("* * * * * *", async () => {
+    cronJob = cron.schedule("*/5 * * * *", async () => {
         try{
             logger.info(`Scheduler is running at ${new Date().toISOString()}`);
             await cleanUpExpiredBookings();
